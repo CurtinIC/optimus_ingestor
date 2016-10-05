@@ -7,4 +7,8 @@ config.py
 tmp/
 backup/
 www/
-
+.*.swp
+.nextflow*
+extract.config
+extract-timeline.html*
+extract/work
