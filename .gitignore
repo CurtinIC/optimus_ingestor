@@ -10,5 +10,7 @@ www/
 .*.swp
 .nextflow*
 extract.config
+extract.sh
 extract-timeline.html*
 extract/work
+passphrase
