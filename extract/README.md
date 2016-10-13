@@ -80,9 +80,11 @@ Logic Notes
 -----------
 When the extraction script is running, it will check for changes and monitor for new event log and course data files
 (whether processed previously or not). On detecting new or changed files, a pipeline is kicked off to decrypt and
-extract the files, and on success the new data is published to a nominated local folder. In the event of new data being
-published, if the file/folder name indicates it is the latest such data (i.e., it has the most recent date), then a
-"latest" symbolic link (in the same folder as the published data) is pointed to the published file/folder.
+extract the files, and on success the new data is published to a nominated local folder.
+
+In the event of new data being published, if the file/folder name indicates it is the latest such data (i.e., it has
+the most recent date), then a "latest" symbolic link (in the same folder as the published data) is pointed to the
+published file/folder. For this to work, the published folders must all be configured to be different to one another.
 
 This component does not handle downloads, and the implementation makes no assumptions about whether or not raw files
 are complete or not. What it does do is use md5 sums of the potentially incomplete raw files to determine if a raw file

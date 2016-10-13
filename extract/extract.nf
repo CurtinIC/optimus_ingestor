@@ -109,7 +109,8 @@ process md5Check {
 
 /*
  * extractEventLog will decrypt, extract, and publish any raw EdX or Edge event log that appears on the queuedEventLog
- * channel. It ignores errors, as failure is possible (e.g., file is mid-download).
+ * channel. It ignores errors, as failure is possible (e.g., file is mid-download). When appropriate, the "latest"
+ * symbolic link is also updated.
  */
 process extractEventLog {
     errorStrategy 'ignore'
@@ -124,6 +125,10 @@ process extractEventLog {
     mv -f '${outputName}' '${outputFolder}/${outputName}'
     chmod '${params.publishMode}' '${outputFolder}/${outputName}'
     chgrp '${params.publishGroup}' '${outputFolder}/${outputName}'
+
+    published=\$(find '${outputFolder}' -mindepth 1 -maxdepth 1 -type f -name '${outputName}')
+    latest=\$(find '${outputFolder}' -mindepth 1 -maxdepth 1 -type f -regextype sed -regex '.*/${params.institution}-\\(\\(edx\\)\\|\\(edge\\)\\)-events-[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\.log' | sort | tail -1)
+    if [ "\$published" == "\$latest" ]; then ln -sfn "\$published" '${outputFolder}/latest'; fi
     """
 }
 
