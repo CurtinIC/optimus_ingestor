@@ -1,10 +1,18 @@
 #!/bin/bash
+#
+# Service script for managing the execution of the Nextflow scripts extract.nf and extract-setup.nf. The first two
+# environment variables in this script (NXF_BIN and EXTRACT_HOME) should be configured before running the script.
+#
 
-# path to the nextflow executable
+# path to the nextflow executable (edit as required)
 NXF_BIN=/usr/bin/nextflow
 
-# path to the folder that has the extract nextflow scripts and configuration
+# path to the folder that has the extract nextflow scripts and configuration (edit as required)
 EXTRACT_HOME=/opt/curtin/edX/extract
+
+###
+### DO NOT EDIT BELOW THIS LINE
+###
 
 # path to the folder in which runtime files such as log files, timeline files, etc, should be stored
 EXTRACT_WORK="$EXTRACT_HOME/work"

@@ -1,17 +1,10 @@
 #!/usr/bin/env nextflow
 
 /*
- * Nextflow script to unpack and decrypt edX research data packages that have already been downloaded (or are currently
- * being downloaded) to the local machine. All operations are conducted on the local machine, with the extracted files
- * likewise stored on the local machine.
-
- * In brief, each time the script is run, it will check for and changes and monitor for new event log and course data
- * files (whether processed previously or not). On detecting new or changed files, a pipeline is kicked off to decrypt
- * and extract the files, and on success the new data is published to a nominated local folder. In the event of a new
- * course data folder being published, if the folder name indicates it is the latest such course data folder to have
- * been published (i.e., it has the most recent date), then a "latest" symbolic link is pointed to that folder.
- *
- * See 'nextflow.config' for configuration settings.
+ * Nextflow script that is responsible for finding and watching for new raw edX data package data files, which it also
+ * unpacks, decrypts, and publishes. All operations are conducted on the local machine. See the 'README.md' for further
+ * information, including installation, configuration, and execution details. In particular, note that this file should
+ * not be executed directly, nor should it need to be modified.
  */
 
 // helper method to check if a file name corresponds to an edx-event file for the configured institution
