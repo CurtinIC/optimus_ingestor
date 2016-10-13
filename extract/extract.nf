@@ -102,6 +102,8 @@ process md5Check {
     """
     echo 'md5Check(script) ${input}:${outputName}:${outputFolder}:${md5}:${sequence}'
     md5sum '${input}' > '${md5}'
+    chmod '${params.publishMode}' '${md5}'
+    chgrp '${params.publishGroup}' '${md5}'
     """
 }
 
@@ -120,6 +122,8 @@ process extractEventLog {
     echo 'extractEventLog ${input}:${outputName}:${outputFolder}'
     gpg --passphrase-file '${params.passphrasePath}' --batch --yes --decrypt '${input}' | gunzip > '${outputName}'
     mv -f '${outputName}' '${outputFolder}/${outputName}'
+    chmod '${params.publishMode}' '${outputFolder}/${outputName}'
+    chgrp '${params.publishGroup}' '${outputFolder}/${outputName}'
     """
 }
 
@@ -142,6 +146,9 @@ process extractCourseData {
     find '${outputName}' -name '*.tar.gz' -exec sh -c 'tar -xzf "\$1" -C "${outputName}" ; rm "\$1"' sh {} \\;
     if [ -d '${outputFolder}/${outputName}' ]; then rm -r '${outputFolder}/${outputName}'; fi
     mv '${outputName}' '${outputFolder}/'
+    chmod -R '${params.publishMode}' '${outputFolder}/${outputName}'
+    chgrp -R '${params.publishGroup}' '${outputFolder}/${outputName}'
+
     published=\$(find '${outputFolder}' -mindepth 1 -maxdepth 1 -type d -name '${outputName}')
     latest=\$(find '${outputFolder}' -mindepth 1 -maxdepth 1 -type d -regextype sed -regex '.*/${params.institution}-[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}' | sort | tail -1)
     if [ "\$published" == "\$latest" ]; then ln -sfn "\$published" '${outputFolder}/latest'; fi

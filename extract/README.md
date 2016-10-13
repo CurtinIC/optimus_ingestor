@@ -38,6 +38,8 @@ vim [BASE_PATH]/extract/extract.sh
 ```
 
 Run the service script setup command (if it doesn't already exist, creates the folder structure for published data).
+Note that unlike when data files are published, the service setup command does *not* change folder permissions or
+group (any changes need to be done manually).
 ```bash
 [BASE_PATH]/extract/extract.sh setup
 ```
