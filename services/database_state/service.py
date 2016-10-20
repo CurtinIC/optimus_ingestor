@@ -1,11 +1,13 @@
 """
 Service for importing the edX database
 """
-import base_service
-from utils import *
-import warnings
+import os
+
 import MySQLdb
-import hashlib
+import base_service
+import config
+import utils
+import warnings
 
 
 class DatabaseState(base_service.BaseService):
@@ -18,13 +20,13 @@ class DatabaseState(base_service.BaseService):
         DatabaseState.inst = self
         super(DatabaseState, self).__init__()
 
-        #The pretty name of the service
+        # The pretty name of the service
         self.pretty_name = "Database State"
-        #Whether the service is enabled
+        # Whether the service is enabled
         self.enabled = True
-        #Whether to run more than once
+        # Whether to run more than once
         self.loop = True
-        #The amount of time to sleep in seconds
+        # The amount of time to sleep in seconds
         self.sleep_time = 60
         #text type table columns
         self.textcols=['bio','feedback','feedback_text','raw_answer','explanation','goals','mailing_address']
@@ -52,19 +54,20 @@ class DatabaseState(base_service.BaseService):
                 path = ingest['meta']
                 file_name = os.path.basename(path)
 
-                #find the tablename
+                # find the tablename
                 table_name = file_name[file_name.find(config.DBSTATE_PREFIX):]
+
                 if table_name.find('-prod-edge-analytics.sql') != -1:
-                  table_name = table_name[:table_name.find('-prod-edge-analytics.sql')]
+                    table_name = table_name[:table_name.find('-prod-edge-analytics.sql')]
                 if table_name.find('-prod-analytics.sql') != -1:
-                  table_name = table_name[:table_name.find('-prod-analytics.sql')]
+                    table_name = table_name[:table_name.find('-prod-analytics.sql')]
                 database_name = table_name.split("-")
-                table_name = database_name[len(database_name)-1]
+                table_name = database_name[len(database_name) - 1]
                 database_name = '_'.join(database_name)
-                database_name = database_name.replace("_"+table_name, "").replace(".","")
+                database_name = database_name.replace("_" + table_name, "").replace(".", "")
 
                 table_name = table_name
-                tmp_table_name = "tmp_"+table_name
+                tmp_table_name = "tmp_" + table_name
 
                 ingest_file = open(path)
 
@@ -76,13 +79,13 @@ class DatabaseState(base_service.BaseService):
 
                 self.use_sql_database(database_name)
                 warnings.filterwarnings('ignore', category=MySQLdb.Warning)
-                self.sql_query("DROP TABLE IF EXISTS "+tmp_table_name+"", True)
+                self.sql_query("DROP TABLE IF EXISTS " + tmp_table_name + "", True)
                 warnings.filterwarnings('always', category=MySQLdb.Warning)                
                 if self.create_table_and_validate(database_name, tmp_table_name, columns):
-                    self.sql_query("LOAD DATA LOCAL INFILE '"+path+"' INTO TABLE "+tmp_table_name+" FIELDS TERMINATED BY '\\t' LINES TERMINATED BY '\\n' IGNORE 1 LINES", True)
+                    self.sql_query("LOAD DATA LOCAL INFILE '"+path+"' INTO TABLE "+tmp_table_name+" CHARACTER SET utf8 FIELDS TERMINATED BY '\\t' LINES TERMINATED BY '\\n' IGNORE 1 LINES", True)
                     self.use_sql_database(database_name)
-                    self.sql_query("DROP TABLE IF EXISTS "+table_name+"", True)
-                    self.sql_query("RENAME TABLE "+tmp_table_name+" TO "+table_name, True)
+                    self.sql_query("DROP TABLE IF EXISTS " + table_name + "", True)
+                    self.sql_query("RENAME TABLE " + tmp_table_name + " TO " + table_name, True)
                     self.finish_ingest(ingest['id'])
         pass
 
@@ -97,10 +100,17 @@ class DatabaseState(base_service.BaseService):
             columns = []
         isvalid = False
 
+        # add indexes
+        index = ""
+        if table_name == 'tmp_auth_user':
+            index = ", KEY idx_email (`email`)"
+        if table_name == 'tmp_auth_userprofile':
+            index = ", KEY idx_uid (`user_id`)"
+
         self.use_sql_database(database_name)
 
         if self.sql_db:
-            #Create the ingestor table if necessary
+            # Create the ingestor table if necessary
             query = "CREATE TABLE IF NOT EXISTS "
             query += table_name
             query += " ( "
@@ -116,10 +126,13 @@ class DatabaseState(base_service.BaseService):
                     coltype = "datetime"
                 if column in self.textcols:
                     coltype = "text"
-                query += column.replace("\n", "")+" "+coltype+", "
+                if column == "bio":
+                    coltype = "mediumtext"
+                query += column.replace("\n", "") + " " + coltype + ", "
 
             query = query[:-2]
-            query += " );"
+            # set encoding and index
+            query += " " + index + ") DEFAULT CHARSET=utf8;"
             warnings.filterwarnings('ignore', category=MySQLdb.Warning)
             self.sql_query(query)
             warnings.filterwarnings('always', category=MySQLdb.Warning)
@@ -136,6 +149,11 @@ def get_files(path):
     """
     required_files = []
     main_path = os.path.realpath(os.path.join(path, 'database_state', 'latest'))
+
+    # patch main_path to use child directory as we can't use symlink
+    if not config.SYMLINK_ENABLED:
+        main_path = utils.get_subdir(main_path)
+
     for filename in os.listdir(main_path):
         extension = os.path.splitext(filename)[1]
         if extension == '.sql':

@@ -18,7 +18,7 @@ import atexit
 Protocol = "HTTP/1.0"
 ServerPort = 8850
 #The string to search for when finding relevant databases
-db_prepend = 'UQx'
+db_prepend = 'AdelaideX'
 
 class ServiceManager():
     """
@@ -70,7 +70,7 @@ class ServiceManager():
         except MySQLdb.OperationalError:
             self.sql_db = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='mysql', local_infile=1)
             cur = self.sql_db.cursor()
-            cur.execute("CREATE DATABASE API")
+            cur.execute("CREATE DATABASE api")
             self.sql_db = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
         if self.sql_db:
             log("Creating table ingestor if not exists")
@@ -188,7 +188,8 @@ def queue_data(servicehandler):
         for service_module in ServiceManager.servicemodules:
             required_files = service_module.get_files(path)
             for required_file in required_files:
-                #Add file to the ingestion table
+                print('ingesting.. ' + required_file)
+                # Add file to the ingestion table
                 servicehandler.manager.add_to_ingestion(service_module.name(), 'file', os.path.realpath(required_file))
     return True
 
@@ -217,7 +218,7 @@ def remove_all_data():
     pcourse_db.commit()
     log("*** Resetting ingestor cache")
     #Delete the mongoDB
-    cmd = "mongo " + config.MONGO_HOST + "/logs --eval \"db.dropDatabase()\""
+    cmd = config.MONGO_PATH + "mongo " + config.MONGO_HOST + "/logs --eval \"db.dropDatabase()\""
     os.system(cmd)
 
 
@@ -259,7 +260,7 @@ class RequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
                 name = sv.name()
                 status[name] = get_status(name)
             response['response'] = status
-        elif self.path == "newdata":
+        elif self.path == "/newdata":
             response['response'] = 'Could not queue data'
             response['statuscode'] = 500
             if queue_data(self.servicehandler):
@@ -325,7 +326,9 @@ class Servicehandler():
         self.server_thread.start()
         #@todo remove this
         queue_data(self)
+        print "SLEEPING NOW"
         self.sleepmainthread()
+
 
     def sleepmainthread(self):
         """
