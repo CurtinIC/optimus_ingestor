@@ -106,22 +106,6 @@ def get_files(path):
             else:
                 pass
                 # print "IGNORING "+ignore_check
-    maxdates = {}
-    for required_file in required_files:
-        dirname = os.path.dirname(required_file)
-        filename = os.path.basename(required_file)
-        filetime = filenametodate(filename)
-        if dirname not in maxdates:
-            maxdates[dirname] = filetime
-        if filetime > maxdates[dirname]:
-            maxdates[dirname] = filetime
-    for i in reversed(xrange(len(required_files))):
-        dirname = os.path.dirname(required_files[i])
-        filename = os.path.basename(required_files[i])
-        filetime = filenametodate(filename)
-        if maxdates[dirname] == filetime:
-            del required_files[i]
-        pass
     return required_files
 
 
