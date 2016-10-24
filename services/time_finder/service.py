@@ -49,6 +49,7 @@ class TimeFinder(base_service.BaseService):
         """
         last_run = self.find_last_run_ingest("TimeFinder")
         last_clickstream = self.find_last_run_ingest("Clickstream")
+
         if self.finished_ingestion("Clickstream") and last_run < last_clickstream:
 
             if self.mongo_client is None:
@@ -62,7 +63,7 @@ class TimeFinder(base_service.BaseService):
                     mongo_collection = self.mongo_db[collection]
                     if mongo_collection:
                         utils.log("CHECKING TIME")
-                        toupdates = mongo_collection.find({self.timefield: {'$exists': True}, 'time_date': {'$exists': False}}, timeout=False)
+                        toupdates = mongo_collection.find({self.timefield: {'$exists': True}, 'time_date': {'$exists': False}})
                         utils.log("FOUND TIME")
                         i = 0
                         for toupdate in toupdates:
