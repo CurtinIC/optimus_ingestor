@@ -310,6 +310,7 @@ class Servicehandler():
         #@todo remove this
         #remove_all_data()
         self.manager.load_services()
+        print "FINISHED LOADING SERVICES"
         self.setup_webserver()
 
     def setup_webserver(self):
