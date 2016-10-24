@@ -2,12 +2,11 @@
 Service for importing the edX clickstream
 """
 
-import json
 import time
-import urllib2
 from datetime import datetime
 
 import base_service
+import course_info
 import config
 import utils
 from pymongo import MongoClient
@@ -83,7 +82,7 @@ class Eventcount(base_service.BaseService):
 
                 # Get events from course info
                 json_file = course['dbname'].replace("_", "-") + ".json"
-                courseinfo = self.loadcourseinfo(json_file)
+                courseinfo = course_info.load_course_info(json_file)
                 if courseinfo is None:
                     utils.log("Can not find course info for ." + str(course_id))
                     continue
@@ -221,20 +220,6 @@ class Eventcount(base_service.BaseService):
 
             cursor.execute(query)
         pass
-
-    def loadcourseinfo(self, json_file):
-        """
-        Loads the course information from JSON course structure file
-        :param json_file: the name of the course structure file
-        :return the course information
-        """
-        print self
-        courseurl = config.SERVER_URL + '/datasources/course_structure/' + json_file
-        courseinfofile = urllib2.urlopen(courseurl)
-        if courseinfofile:
-            courseinfo = json.load(courseinfofile)
-            return courseinfo
-        return None
 
     def clean_ec_db(self):
         cursor = self.sql_ec_conn.cursor()

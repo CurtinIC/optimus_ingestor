@@ -2,6 +2,7 @@
 A service for generating person course derived datasets
 """
 import base_service
+import course_info
 import os
 import utils
 import MySQLdb
@@ -11,8 +12,6 @@ import dateutil.parser
 import math
 from models import PCModel
 from models import CFModel
-import urllib2
-import json
 import time
 import datetime
 import csv
@@ -116,7 +115,7 @@ class PersonCourse(base_service.BaseService):
 
                 # Get chapters from course info
                 json_file = course['dbname'].replace("_", "-") + '.json'
-                courseinfo = self.loadcourseinfo(json_file)
+                courseinfo = course_info.load_course_info(json_file)
                 utils.log('PersonCourse: ' + str(course_id))
                 if courseinfo is None:
                     utils.log("Can not find course info for ." + str(course_id))
@@ -363,7 +362,7 @@ class PersonCourse(base_service.BaseService):
                             pc_dict[user_id].set_nevents(item["eventSum"])
                             pc_dict[user_id].set_final_cc_cname(item["countrySet"])
                         else:
-                        utils.log("Context.user_id: %s does not exist in %s {auth_user}." % (user_id, pc_course_id))
+                            utils.log("Context.user_id: %s does not exist in %s {auth_user}." % (user_id, pc_course_id))
                     except TypeError as err:
                         print "error %s item %s" % (err.message, item) 
 
@@ -525,24 +524,6 @@ class PersonCourse(base_service.BaseService):
             # print query
             cursor.execute(query)
             warnings.filterwarnings('always', category=MySQLdb.Warning)
-
-    def loadcourseinfo(self, json_file):
-        """
-        Loads the course information from JSON course structure file
-        :param json_file: the name of the course structure file
-        :return the course information
-        """
-        print self
-        courseurl = config.SERVER_URL + '/datasources/course_structure/' + json_file
-        print "ATTEMPTING TO LOAD " + courseurl
-        try:
-            courseinfofile = urllib2.urlopen(courseurl)
-            if courseinfofile:
-                courseinfo = json.load(courseinfofile)
-                return courseinfo
-        except urllib2.HTTPError as e:
-            print "Failed to load %s: %s " % (courseurl, e.message)
-        return None
 
     def get_chapter(self, obj, found=None):
         """

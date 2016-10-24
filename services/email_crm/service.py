@@ -14,6 +14,7 @@ import MySQLdb
 import unicodecsv as csv
 
 import base_service
+import course_info
 import config
 import utils
 
@@ -65,6 +66,7 @@ class EmailCRM(base_service.BaseService):
         """
         self.sql_ecrm_conn = self.connect_to_sql(self.sql_ecrm_conn, self.ecrm_db, True)
         self.courses = self.get_all_courses()
+        self.create_ecrm_table()
 
         pass
 
@@ -120,26 +122,28 @@ class EmailCRM(base_service.BaseService):
         backup_path = config.EXPORT_PATH
 
         file_list = glob.glob(os.path.join(backup_path, self.ecrm_table + "*.csv"))
-        file_list.sort(reverse=True)
-        last_file = file_list[0]
-        warnings.filterwarnings('ignore', category=MySQLdb.Warning)
-        query = "SELECT 1 FROM %s WHERE extract_file = '%s' " % (self.le_table, last_file)
-        cursor = self.sql_ecrm_conn.cursor()
 
-        if not cursor.execute(query) and os.path.isfile(last_file):
-            self.ingest_csv_file(last_file, self.le_table)
-        cursor.close()
+        if (file_list):
+            file_list.sort(reverse=True)
+            last_file = file_list[0]
+            warnings.filterwarnings('ignore', category=MySQLdb.Warning)
+            query = "SELECT 1 FROM %s WHERE extract_file = '%s' " % (self.le_table, last_file)
+            cursor = self.sql_ecrm_conn.cursor()
 
-        self.sql_ecrm_conn.commit()
+            if not cursor.execute(query) and os.path.isfile(last_file):
+                self.ingest_csv_file(last_file, self.le_table)
+            cursor.close()
 
-        # update the extract_date timestamp with now.
-        query = "UPDATE %s SET extract_date = '%s', extract_file = '%s' WHERE extract_date is NULL" % (
-            self.le_table, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())), last_file)
-        cursor = self.sql_ecrm_conn.cursor()
-        cursor.execute(query)
-        cursor.close()
-        self.sql_ecrm_conn.commit()
-        warnings.filterwarnings('always', category=MySQLdb.Warning)
+            self.sql_ecrm_conn.commit()
+
+            # update the extract_date timestamp with now.
+            query = "UPDATE %s SET extract_date = '%s', extract_file = '%s' WHERE extract_date is NULL" % (
+                self.le_table, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time())), last_file)
+            cursor = self.sql_ecrm_conn.cursor()
+            cursor.execute(query)
+            cursor.close()
+            self.sql_ecrm_conn.commit()
+            warnings.filterwarnings('always', category=MySQLdb.Warning)
 
         pass
 
@@ -347,7 +351,7 @@ class EmailCRM(base_service.BaseService):
 
                 # Get nice course name from course info
                 json_file = dbname.replace("_", "-") + '.json'
-                courseinfo = self.loadcourseinfo(json_file)
+                courseinfo = course_info.load_course_info(json_file)
                 if courseinfo is None:
                     utils.log("Can not find course info for ." + str(course_id))
                     continue
@@ -394,7 +398,7 @@ class EmailCRM(base_service.BaseService):
                         "JOIN Person_Course.personcourse_{2} pc ON au.id = pc.user_id " \
                         "JOIN {0}.auth_userprofile up ON au.id = up.user_id " \
                         "LEFT JOIN {4}.countries_io c ON up.country = c.country_code " \
-                        "LEFT JOIN email_crm.lastexport le " \
+                        "LEFT JOIN Email_CRM.lastexport le " \
                         "ON le.user_id = up.user_id " \
                         "AND le.viewed = pc.viewed  " \
                         "AND le.explored = pc.explored " \
@@ -431,22 +435,6 @@ class EmailCRM(base_service.BaseService):
                 break
 
         utils.log("The EmailCRM data: %s exported to csv file %s" % (e_tablename, backup_file))
-
-    def loadcourseinfo(self, json_file):
-        """
-        Loads the course information from JSON course structure file
-        :param json_file: the name of the course structure file
-        :return the course information
-        """
-        # print self
-        courseurl = config.SERVER_URL + '/datasources/course_structure/' + json_file
-        print "ATTEMPTING TO LOAD " + courseurl
-        courseinfofile = urllib2.urlopen(courseurl)
-        if courseinfofile:
-            courseinfo = json.load(courseinfofile)
-            return courseinfo
-        return None
-
 
 def get_files(path):
     """

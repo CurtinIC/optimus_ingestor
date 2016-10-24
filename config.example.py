@@ -16,7 +16,7 @@ EXPORT_PATH = '/Volumes/VMs/export'
 MONGO_PATH = '/usr/local/bin/'
 #Data share supports symlinking true/false
 SYMLINK_ENABLED = False
-#The server where the course information is found
+#The server where the course information is found (set to None to instead load from local files)
 SERVER_URL = 'http://dashboard.ceit.uq.edu.au'
 CLICKSTREAM_PREFIX = 'uqx-edx-events-'
 DBSTATE_PREFIX = 'UQx-'
