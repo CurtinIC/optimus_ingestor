@@ -79,7 +79,7 @@ The optimus ingestor will also generate course structure data (inside the www di
 mkdir -p [BASE_PATH]/www/course_structure
 mkdir -p [BASE_PATH]/www/edx_course_structure
 ```
-If the SERVER_URL specified in config.py is not None, then the generated course structure data will need to be available via a web endpoint called datasources
+If the SERVER_URL specified in config.py is not None, then the generated course structure data will need to be available via a web endpoint called datasources.
 The API application will also need this for some endpoints.  This can just be a symlink from your htdocs or web server folder:
 ```
 ln -s [BASE_PATH]/www [HTDOCS_PATH]/datasources
