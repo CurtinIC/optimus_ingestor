@@ -38,7 +38,7 @@ class ServiceManager():
         """
         Loads each module and removes any previously uncompleted sessions
         """
-        root_db = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
+        root_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
         cur = root_db.cursor()
         query = "UPDATE ingestor SET started=0, started_date=NULL WHERE completed=0 AND started=1;"
         cur.execute(query)
@@ -66,12 +66,12 @@ class ServiceManager():
         #Create and connect to the API database
         log("Testing Database existance")
         try:
-            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
+            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
         except MySQLdb.OperationalError:
-            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='mysql', local_infile=1)
+            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='mysql', local_infile=1)
             cur = self.sql_db.cursor()
             cur.execute("CREATE DATABASE api")
-            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
+            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
         if self.sql_db:
             log("Creating table ingestor if not exists")
             #Create the ingestor table if necessary
@@ -90,12 +90,12 @@ class ServiceManager():
         #Create and connect to the API database
         log("Testing Database existance")
         try:
-            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
+            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
         except MySQLdb.OperationalError:
-            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='mysql', local_infile=1)
+            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='mysql', local_infile=1)
             cur = self.sql_db.cursor()
             cur.execute("CREATE DATABASE API")
-            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
+            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
         if self.sql_db:
             log("Creating table config")
             #Create the config table if necessary
@@ -141,7 +141,7 @@ def get_status(service_name):
     :param service_name: the name of the service
     :return: a dictionary of the services status
     """
-    api_db = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
+    api_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
     status = {'name': service_name}
     cur = api_db.cursor()
     query = 'SELECT type, meta, started, completed, started_date, completed_date FROM ingestor WHERE service_name="' + service_name + '" AND started=1 ORDER BY created;'
@@ -199,7 +199,7 @@ def remove_all_data():
     Completely wipes the ingestion, should never be used apart from testing
     :return: Returns True when completed
     """
-    root_db = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
+    root_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
     cur = root_db.cursor()
     query = "SHOW DATABASES;"
     cur.execute(query)
@@ -211,7 +211,7 @@ def remove_all_data():
             root_db.commit()
             log("*** Removing database "+row[0])
     #Empty the ingestor
-    pcourse_db = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
+    pcourse_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
     pcur = pcourse_db.cursor()
     query = "TRUNCATE ingestor"
     pcur.execute(query)

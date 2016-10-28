@@ -92,7 +92,7 @@ class BaseService(object):
         """
         Sets up the API DB for getting service information
         """
-        self.api_db = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD,
+        self.api_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD,
                                       db='api', local_infile=1)
 
     def finished_ingestion(self, service_name):
@@ -193,16 +193,16 @@ class BaseService(object):
         :param database_name: The name of the database
         """
         try:
-            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD,
+            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD,
                                           db=database_name, local_infile=1, charset='utf8')
             return True
         except MySQLdb.OperationalError:
-            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD,
+            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD,
                                           db='mysql', local_infile=1, charset='utf8')
             cur = self.sql_db.cursor()
             cur.execute("CREATE DATABASE " + database_name)
             try:
-                self.sql_db = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME,
+                self.sql_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME,
                                               passwd=config.SQL_PASSWORD, db=database_name, local_infile=1,
                                               charset='utf8')
                 return True
@@ -263,7 +263,7 @@ class BaseService(object):
         :return: An array of ingests
         """
         ingests = []
-        api_db = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api',
+        api_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api',
                                  local_infile=1)
         cur = api_db.cursor()
         query = "SELECT * FROM ingestor WHERE service_name = '" + service_name + "' AND started = 1 AND completed = 1 ORDER BY created ASC;"
@@ -284,14 +284,14 @@ class BaseService(object):
         print self
         if sql_connect is None or force_reconnect:
             try:
-                sql_connect = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME,
+                sql_connect = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME,
                                               passwd=config.SQL_PASSWORD, db=db_name, local_infile=1, charset='utf8')
                 return sql_connect
             except Exception, e:
                 # Create the database
                 if e[0] and create_db and db_name != "":
                     if sql_connect is None:
-                        sql_connect = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME,
+                        sql_connect = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME,
                                                       passwd=config.SQL_PASSWORD, local_infile=1, charset='utf8')
                     log("Creating database " + db_name)
 

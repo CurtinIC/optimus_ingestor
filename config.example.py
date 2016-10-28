@@ -1,5 +1,6 @@
 #SQL Server details
 SQL_HOST = 'localhost'
+SQL_PORT = 3306
 SQL_USERNAME = 'root'
 SQL_PASSWORD = ''
 #Mongo Server details
