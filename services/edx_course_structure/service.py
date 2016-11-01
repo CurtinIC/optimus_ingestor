@@ -48,9 +48,12 @@ def get_files(path):
     main_path = os.path.realpath(os.path.join(path, 'database_state', 'latest'))
     #print 'main_path'
     #print main_path
-    for file in os.listdir(main_path):
-      if os.path.isfile(os.path.join(main_path, file)) and file.endswith("-analytics.json"):
-          required_files.append(os.path.join(main_path, file))
+    try:
+        for file in os.listdir(main_path):
+            if os.path.isfile(os.path.join(main_path, file)) and file.endswith("-analytics.json"):
+                required_files.append(os.path.join(main_path, file))
+    except Exception, e:
+        print repr(e) + ": " + main_path
             
     #print 'required_files'
     #print required_files        

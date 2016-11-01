@@ -145,13 +145,17 @@ def get_files(path):
     required_files = []
     main_path = os.path.realpath(os.path.join(path, 'database_state', 'latest'))
 
-    # patch main_path to use child directory as we can't use symlink
-    if not config.SYMLINK_ENABLED:
-        main_path = utils.get_subdir(main_path)
+    try:
+        # patch main_path to use child directory as we can't use symlink
+        if not config.SYMLINK_ENABLED:
+            main_path = utils.get_subdir(main_path)
 
-    for subdir in os.listdir(main_path):
-        if os.path.isdir(os.path.join(main_path, subdir)):
-            required_files.append(os.path.join(main_path, subdir))
+        for subdir in os.listdir(main_path):
+            if os.path.isdir(os.path.join(main_path, subdir)):
+                required_files.append(os.path.join(main_path, subdir))
+    except Exception, e:
+        print repr(e) + ": " + main_path
+
     return required_files
 
 

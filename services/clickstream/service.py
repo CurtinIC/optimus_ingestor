@@ -96,16 +96,19 @@ def get_files(path):
     required_files = []
     main_path = os.path.realpath(os.path.join(path, 'clickstream_logs', 'latest'))
 
-    for filename in os.listdir(main_path):
-        extension = os.path.splitext(filename)[1]
-        if extension == '.log':
-            pathvars = os.path.join(main_path, filename).split('/')
-            ignore_check = pathvars[len(pathvars) - 2] + "/" + pathvars[len(pathvars) - 1]
-            if ignore_check not in ignore_dates:
-                required_files.append(os.path.join(main_path, filename))
-            else:
-                pass
-                # print "IGNORING "+ignore_check
+    try:
+        for filename in os.listdir(main_path):
+            extension = os.path.splitext(filename)[1]
+            if extension == '.log':
+                pathvars = os.path.join(main_path, filename).split('/')
+                ignore_check = pathvars[len(pathvars) - 2] + "/" + pathvars[len(pathvars) - 1]
+                if ignore_check not in ignore_dates:
+                    required_files.append(os.path.join(main_path, filename))
+                else:
+                    pass
+                    # print "IGNORING "+ignore_check
+    except Exception, e:
+        print repr(e) + ": " + main_path
     return required_files
 
 
