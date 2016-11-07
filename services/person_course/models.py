@@ -1,11 +1,10 @@
 import MySQLdb
-import datetime
 import warnings
 
 class CFModel(object):
 
-    def __init__(self, course, dbname, mongoname, discussiontable, registration_open_date="", course_launch_date="",
-                 course_close_date="", nregistered_students=0, nviewed_students=0, nexplored_students=0, ncertified_students=0,
+    def __init__(self, course, dbname, mongoname, discussiontable, registration_open_date="0000-00-00", course_launch_date="0000-00-00",
+                 course_close_date="0000-00-00", nregistered_students=0, nviewed_students=0, nexplored_students=0, ncertified_students=0,
                  nhonor_students=0, naudit_students=0, nvertified_students=0, course_effort=0, course_length=0, nchapters=0,
                  nvideos=0, nhtmls=0, nassessments=0, nsummative_assessments=0, nformative_assessments=0, nincontent_discussions=0,
                  nactivities=0, best_assessment="", worst_assessment=""):
@@ -135,7 +134,7 @@ class CFModel(object):
 class PCModel(object):
 
     def __init__(self, course_id, user_id, registered=1, viewed=0, explored=0, certified=0, final_cc_cname="",
-                 LoE="", YoB=None, gender="", mode="", grade=0, start_time="", last_event="", nevents=0, ndays_act=0,
+                 LoE="", YoB=0, gender="", mode="", grade=0, start_time="0000-00-00", last_event="0000-00-00", nevents=0, ndays_act=0,
                  nplay_video=0, nchapters=0, nforum_posts=0, roles="", attempted_problems=0, inconsistent_flag=0):
         self.course_id = course_id
         self.user_id = user_id
@@ -184,10 +183,10 @@ class PCModel(object):
             self.LoE = LoE
 
     def set_YoB(self, YoB):
-        if YoB == "NULL":
-            self.YoB = ""
-        else:
+        if YoB != "NULL" and 1901 <= int(YoB) <= 2155:
             self.YoB = YoB
+        else:
+            self.YoB = 0
 
     def set_gender(self, gender):
         if gender == "NULL":

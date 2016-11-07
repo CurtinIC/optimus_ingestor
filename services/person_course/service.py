@@ -358,7 +358,7 @@ class PersonCourse(base_service.BaseService):
                     try: 
                         user_id = item["_id"]
                         if user_id in pc_dict:
-                            pc_dict[user_id].set_last_event(item["last_event"])
+                            pc_dict[user_id].set_last_event(item["last_event"][:len(u"YYYY-MM-DD")])
                             pc_dict[user_id].set_nevents(item["eventSum"])
                             pc_dict[user_id].set_final_cc_cname(item["countrySet"])
                         else:
