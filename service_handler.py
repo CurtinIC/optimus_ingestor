@@ -18,7 +18,7 @@ import atexit
 Protocol = "HTTP/1.0"
 ServerPort = 8850
 #The string to search for when finding relevant databases
-db_prepend = 'AdelaideX'
+db_prepend = 'CurtinX'
 
 class ServiceManager():
     """
