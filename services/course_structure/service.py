@@ -154,8 +154,8 @@ def get_files(path):
         for subdir in os.listdir(main_path):
             if os.path.isdir(os.path.join(main_path, subdir)):
                 required_files.append(os.path.join(main_path, subdir))
-    except Exception, e:
-        print repr(e) + ": " + main_path
+    except EnvironmentError, e:
+        print str(e)
 
     return required_files
 

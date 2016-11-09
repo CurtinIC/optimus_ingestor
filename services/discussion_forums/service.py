@@ -8,7 +8,6 @@ import utils
 from pymongo import MongoClient
 import json
 from bson.objectid import ObjectId
-import datetime
 from pymongo.errors import OperationFailure
 from dateutil import parser
 
@@ -197,8 +196,8 @@ def get_files(path):
             extension = os.path.splitext(filename)[1]
             if extension == '.mongo':
                 required_files.append(os.path.join(main_path, filename))
-    except Exception, e:
-        print repr(e) + ": " + main_path
+    except EnvironmentError, e:
+        print str(e)
 
     return required_files
 

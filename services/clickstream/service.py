@@ -1,8 +1,6 @@
 """
 Service for importing the edX clickstream
 """
-import subprocess
-
 import base_service
 import os
 import utils
@@ -107,8 +105,8 @@ def get_files(path):
                 else:
                     pass
                     # print "IGNORING "+ignore_check
-    except Exception, e:
-        print repr(e) + ": " + main_path
+    except EnvironmentError, e:
+        print str(e)
     return required_files
 
 

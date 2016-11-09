@@ -159,8 +159,8 @@ def get_files(path):
             extension = os.path.splitext(filename)[1]
             if extension == '.sql':
                 required_files.append(os.path.join(main_path, filename))
-    except Exception, e:
-        print repr(e) + ": " + main_path
+    except EnvironmentError, e:
+        print str(e)
 
     return required_files
 

@@ -456,8 +456,8 @@ def get_files(path):
             if filename == config.DBSTATE_PREFIX.lower() + "email_opt_in-prod-analytics.csv":
                 required_files.append(os.path.join(main_path, filename))
                 break  # only one email file, once found exit the search
-    except Exception, e:
-        print repr(e) + ": " + main_path
+    except EnvironmentError, e:
+        print str(e)
 
     return required_files
 
