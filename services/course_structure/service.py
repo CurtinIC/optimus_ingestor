@@ -72,8 +72,9 @@ class CourseStructure(base_service.BaseService):
                     policyfile = open(policyfileurl).read()
                     policydata = json.loads(policyfile)
                     course['policy'] = policydata
-                    f = open(self.outputdir + '/' + coursename + '.json', 'w+')
-                    print self.outputdir + '/' + coursename + '.json'
+                    json_file = coursename.replace("_", "-") + '.json'
+                    f = open(self.outputdir + '/' + json_file, 'w+')
+                    print self.outputdir + '/' + json_file
                     f.write(json.dumps(course))
                 except IOError as e:
                     print "COURSE STRUCTURE FILE DOES NOT EXIST " + str(coursefile)
