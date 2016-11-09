@@ -74,13 +74,8 @@ Some services make use of the EXPORT_PATH that is defined in config.py, which ne
 ```bash
 mkdir -p [EXPORT_PATH]
 ```
-The optimus ingestor will also generate course structure data (inside the www directory of the ingestor), and to do so some folders need to be created in advance
-```bash
-mkdir -p [BASE_PATH]/www/course_structure
-mkdir -p [BASE_PATH]/www/edx_course_structure
-```
-If the SERVER_URL specified in config.py is not None, then the generated course structure data will need to be available via a web endpoint called datasources.
-The API application will also need this for some endpoints.  This can just be a symlink from your htdocs or web server folder:
+If the SERVER_URL specified in config.py is not None, then the generated course structure data (inside the www directory of the ingestor) will need to be available
+via a web endpoint called datasources. The API application will also need this for some endpoints.  This can just be a symlink from your htdocs or web server folder:
 ```
 ln -s [BASE_PATH]/www [HTDOCS_PATH]/datasources
 ```
@@ -132,7 +127,8 @@ The service logic is as follows:
  - Course Structure - Uses the XML files in the research guide to generate a nested JSON structure describing each course (no requirements)
  - IP To Country - Updates Mongo records with Country attributes where IP is present (requires complete clickstream)
  - Time Finder - Updates Mongo records with Date object attributes where a date string is present (requires complete clickstream)
- - Person Course - Generates Person Course SQL table (requires complete IPToCountry and Timefinder)
+ - Person Course - Generates and exports Person Course SQL table (requires complete IP to country, time finder, and database state)
+ - Email CRM - Generates and exports Email CRM SQL table (requires complete person course and database state)
 
 
 Running Tests
@@ -154,5 +150,4 @@ However feel free to open issues that you run into and we can look at them ASAP.
 
 Contact
 -------
-The best contact point apart from opening github issues or comments is to email 
-technical@uqx.uq.edu.au
+The best contact point, apart from opening github issues or comments, is to contact [Simon Huband](http://oasisapps.curtin.edu.au/staff/profile/view/Simon.Huband).
