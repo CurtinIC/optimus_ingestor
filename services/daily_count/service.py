@@ -85,11 +85,11 @@ class DailyCount(base_service.BaseService):
                 print "RUNNNNING"
                 print course
 
-                user_events = self.mongo_collection.aggregate([
+                user_events = list(self.mongo_collection.aggregate([
                     {"$match": {"context.course_id": course['mongoname']}},
-                    {"$sort": {"time": 1}},
+                    # {"$sort": {"time": 1}},
                     {"$group": {"_id": "$context.user_id", "countrySet": {"$addToSet": "$country"}, "eventSum": {"$sum": 1}, "last_event": {"$last": "$time"}}}
-                ], allowDiskUse=True)['result']
+                ], allowDiskUse=True))  # ['result']
                 print "WEEE"
                 print user_events
                 print "XXXX"
@@ -205,13 +205,13 @@ class DailyCount(base_service.BaseService):
         print self
         if sql_connect is None or force_reconnect:
             try:
-                sql_connect = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db=db_name)
+                sql_connect = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db=db_name, charset='utf-8')
                 return sql_connect
             except Exception, e:
                 # Create the database
                 if e[0] and create_db and db_name != "":
                     if sql_connect is None:
-                        sql_connect = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD)
+                        sql_connect = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, charset='utf-8')
                     utils.log("Creating database " + db_name)
 
                     cur = sql_connect.cursor()

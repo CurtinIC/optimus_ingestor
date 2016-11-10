@@ -2,6 +2,7 @@
 A service for generating person course derived datasets
 """
 import base_service
+import course_info
 import os
 import utils
 import MySQLdb
@@ -11,8 +12,6 @@ import dateutil.parser
 import math
 from models import PCModel
 from models import CFModel
-import urllib2
-import json
 import time
 import datetime
 import csv
@@ -30,13 +29,13 @@ class PersonCourse(base_service.BaseService):
         PersonCourse.inst = self
         super(PersonCourse, self).__init__()
 
-        #The pretty name of the service
+        # The pretty name of the service
         self.pretty_name = "Person Course"
-        #Whether the service is enabled
+        # Whether the service is enabled
         self.enabled = True
-        #Whether to run more than once
+        # Whether to run more than once
         self.loop = True
-        #The amount of time to sleep in seconds
+        # The amount of time to sleep in seconds
         self.sleep_time = 60
 
         self.pc_table = 'personcourse'
@@ -46,7 +45,7 @@ class PersonCourse(base_service.BaseService):
         self.sql_pc_conn = None
         self.sql_course_conn = None
 
-        #Vars
+        # Vars
         self.mongo_client = None
         self.mongo_db = None
         self.mongo_dbname = ""
@@ -75,7 +74,38 @@ class PersonCourse(base_service.BaseService):
         last_timefinder = self.find_last_run_ingest("TimeFinder")
         last_iptocountry = self.find_last_run_ingest("IpToCountry")
         last_dbstate = self.find_last_run_ingest("DatabaseState")
-        if self.finished_ingestion("TimeFinder") and last_run < last_timefinder and self.finished_ingestion("IpToCountry") and last_run < last_iptocountry and self.finished_ingestion("DatabaseState") and last_run < last_dbstate:
+
+        # if self.finished_ingestion("TimeFinder"):
+        #     print "finished TimeFinder"
+        # else:
+        #     print "bad timefinder"
+        # if last_run < last_timefinder:
+        #     print "last_run < last_timefinder"
+        # else:
+        #     print "bad timefinder"
+        # if self.finished_ingestion("IpToCountry"):
+        #     print "IptoCountry finished"
+        # else:
+        #     print "bad ipcountry"
+        # if last_run < last_iptocountry:
+        #     print "last_run < last_iptocountry"
+        # else:
+        #     print "bad ipcountry"
+        # if self.finished_ingestion("DatabaseState"):
+        #     print "finished database state"
+        # else:
+        #     print "bad dbstate"
+        # if last_run < last_dbstate:
+        #     print "last_run < last_dbstate"
+        # else:
+        #     print "bad dbstate"
+
+        if self.finished_ingestion("TimeFinder") and \
+                        last_run < last_timefinder and \
+                self.finished_ingestion("IpToCountry") and \
+                        last_run < last_iptocountry and \
+                self.finished_ingestion("DatabaseState") and \
+                        last_run < last_dbstate:
             # Create 'cf_table'
             self.create_cf_table()
             # Clean 'pc_table'
@@ -85,7 +115,7 @@ class PersonCourse(base_service.BaseService):
 
                 # Get chapters from course info
                 json_file = course['dbname'].replace("_", "-") + '.json'
-                courseinfo = self.loadcourseinfo(json_file)
+                courseinfo = course_info.load_course_info(json_file)
                 utils.log('PersonCourse: ' + str(course_id))
                 if courseinfo is None:
                     utils.log("Can not find course info for ." + str(course_id))
@@ -94,8 +124,8 @@ class PersonCourse(base_service.BaseService):
                 cf_item = CFModel(course_id, course['dbname'], course['mongoname'], course['discussiontable'])
                 # Set cf_item course_launch_date
                 bad_start = False
-		course_launch_date=None
-		course_close_date=None
+                course_launch_date = None
+                course_close_date = None
                 if 'start' in courseinfo:
                     try:
                         course_launch_time = dateutil.parser.parse(courseinfo['start'].replace('"', ""))
@@ -114,7 +144,7 @@ class PersonCourse(base_service.BaseService):
                 # Set cf_item course_close_date
                 if 'end' in courseinfo:
                     try:
-                        course_close_time = dateutil.parser.parse(courseinfo['end'])
+                        course_close_time = dateutil.parser.parse(courseinfo['end'].replace('"', ""))
                         course_close_date = course_close_time.date()
                         cf_item.set_course_close_date(course_close_date)
                     except ValueError:
@@ -122,7 +152,7 @@ class PersonCourse(base_service.BaseService):
                 # Set cf_item course_length
                 if course_launch_date and course_close_date:
                     date_delta = course_close_date - course_launch_date
-                    cf_item.set_course_length(math.ceil(date_delta.days/7.0))
+                    cf_item.set_course_length(math.ceil(date_delta.days / 7.0))
 
                 # Set cf_item nchapters
                 chapters = []
@@ -168,11 +198,12 @@ class PersonCourse(base_service.BaseService):
                 # The list of user_id
                 user_id_list = pc_dict.keys()
                 user_id_list.sort()
-                #print user_id_list
+                # print user_id_list
 
                 # Set LoE, YoB, gender based on the data in {auth_userprofile}
                 utils.log("{auth_userprofile}")
-                query = "SELECT user_id, year_of_birth, level_of_education, gender FROM auth_userprofile WHERE user_id in (" + ",".join(["%s"] * len(user_id_list)) + ")"
+                query = "SELECT user_id, year_of_birth, level_of_education, gender FROM auth_userprofile WHERE user_id IN (" + ",".join(
+                    ["%s"] * len(user_id_list)) + ")"
                 query = query % tuple(user_id_list)
                 course_cursor.execute(query)
                 result = course_cursor.fetchall()
@@ -184,7 +215,8 @@ class PersonCourse(base_service.BaseService):
 
                 # Set certified based on the data in {certificates_generatedcertificate}
                 utils.log("{certificates_generatedcertificate}")
-                query = "SELECT user_id, grade, status FROM certificates_generatedcertificate WHERE user_id in (" + ",".join(["%s"] * len(user_id_list)) + ")"
+                query = "SELECT user_id, grade, status FROM certificates_generatedcertificate WHERE user_id IN (" + ",".join(
+                    ["%s"] * len(user_id_list)) + ")"
                 query = query % tuple(user_id_list)
                 course_cursor.execute(query)
                 result = course_cursor.fetchall()
@@ -195,7 +227,8 @@ class PersonCourse(base_service.BaseService):
 
                 # Set start_time based on the data in {student_courseenrollment}
                 utils.log("{student_courseenrollment}")
-                query = "SELECT user_id, created, mode FROM student_courseenrollment WHERE user_id in (" + ",".join(["%s"] * len(user_id_list)) + ")"
+                query = "SELECT user_id, created, mode FROM student_courseenrollment WHERE user_id IN (" + ",".join(
+                    ["%s"] * len(user_id_list)) + ")"
                 query = query % tuple(user_id_list)
                 course_cursor.execute(query)
                 result = course_cursor.fetchall()
@@ -285,45 +318,51 @@ class PersonCourse(base_service.BaseService):
                 self.mongo_dbname = "discussion_forum"
                 self.mongo_collectionname = course['discussiontable']
                 self.connect_to_mongo(self.mongo_dbname, self.mongo_collectionname)
-
+                # Change call for new API code Tim Cavanagh 05/01/2016
+                # pipeline = [{"$group": {"_id": "$author_id", "postSum": {"$sum": 1}}}]
+                #
+                # user_posts = self.mongo_collection.aggregate(pipeline, allowDiskUse=True)
                 user_posts = self.mongo_collection.aggregate([
-                    #{"$match": {"author_id": {"$in": user_id_list}}},
+                    # {"$match": {"author_id": {"$in": user_id_list}}},
                     {"$group": {"_id": "$author_id", "postSum": {"$sum": 1}}}
-                ])    # ['result']
+                ])  # ['result']
                 
                 for item in user_posts:
-                    if "_id" in item and item["_id"] != None:
+                    if "_id" in item and item["_id"] is not None:
                         user_id = int(item["_id"])
                         if user_id in pc_dict:
                             pc_dict[user_id].set_nforum_posts(item['postSum'])
                         else:
-                            utils.log("Author id: %s does not exist in {auth_user}." % user_id)
+                            utils.log("Author id: %s does not exist in %s {auth_user}." % (
+                                user_id, self.mongo_collectionname))
                     else:
-                        utils.log("Author id: %s does not exist in {auth_user}." % user_id)
+                        utils.log(
+                            "Author id: %s does not exist in %s {auth_user}." % (user_id, self.mongo_collectionname))
 
                 # Tracking logs
                 utils.log("{logs}")
                 self.mongo_dbname = "logs"
                 self.mongo_collectionname = "clickstream"
-                #self.mongo_collectionname = "clickstream_hypers_301x_sample"
                 self.connect_to_mongo(self.mongo_dbname, self.mongo_collectionname)
 
                 user_events = self.mongo_collection.aggregate([
                     {"$match": {"context.course_id": pc_course_id}},
-                    {"$sort": {"time": 1}},
-                    {"$group": {"_id": "$context.user_id", "countrySet": {"$addToSet": "$country"}, "eventSum": {"$sum": 1}, "last_event": {"$last": "$time"}}}
-                ], allowDiskUse=True)  # ['result']
-                if 'result' in user_events:
-                    user_events=user_events['result']
+                    # {"$sort": {"time": 1}},
+                    {"$group": {"_id": "$context.user_id", "countrySet": {"$addToSet": "$country"},
+                                "eventSum": {"$sum": 1}, "last_event": {"$last": "$time"}}}
+                ], allowDiskUse=True, batchSize=100, useCursor=False)  # ['result'] batchSize=100, , useCursor=False
+
+                # if 'result' in user_events:
+                #     user_events = user_events['result']
                 for item in user_events:
                     try: 
                         user_id = item["_id"]
                         if user_id in pc_dict:
-                            pc_dict[user_id].set_last_event(item["last_event"])
+                            pc_dict[user_id].set_last_event(item["last_event"][:len(u"YYYY-MM-DD")])
                             pc_dict[user_id].set_nevents(item["eventSum"])
                             pc_dict[user_id].set_final_cc_cname(item["countrySet"])
                         else:
-                            utils.log("Context.user_id: %s does not exist in {auth_user}." % user_id)
+                            utils.log("Context.user_id: %s does not exist in %s {auth_user}." % (user_id, pc_course_id))
                     except TypeError as err:
                         print "error %s item %s" % (err.message, item) 
 
@@ -338,7 +377,7 @@ class PersonCourse(base_service.BaseService):
                 cf_item.set_ncertified_students(ncertified_students)
 
                 pc_cursor = self.sql_pc_conn.cursor()
-                #print cf_item
+                # print cf_item
                 cf_item.save2db(pc_cursor, self.cf_table)
 
                 # Till now, data preparation for pc_tablex has been finished.
@@ -379,7 +418,6 @@ class PersonCourse(base_service.BaseService):
         except Exception, e:
             utils.log("Could not connect to MongoDB: %s" % e)
         return False
-
 
     def clean_pc_db(self):
         """
@@ -430,7 +468,7 @@ class PersonCourse(base_service.BaseService):
             {"col_name": "nincontent_discussions", "col_type": "int"},
             {"col_name": "nactivities", "col_type": "int"},
             {"col_name": "best_assessment", "col_type": "varchar(255)"},
-            #{"col_name": "worst_assessment", "col_type": "varchar(255)"},
+            # {"col_name": "worst_assessment", "col_type": "varchar(255)"},
         ]
         warnings.filterwarnings('ignore', category=MySQLdb.Warning)
         query = "CREATE TABLE IF NOT EXISTS " + tablename
@@ -438,7 +476,7 @@ class PersonCourse(base_service.BaseService):
         for column in columns:
             query += column['col_name'] + " " + column['col_type'] + ', '
         query += " worst_assessment varchar(255)"
-        query += " );"
+        query += " ) DEFAULT CHARSET=utf8;"
         cursor = self.sql_pc_conn.cursor()
         cursor.execute(query)
         warnings.filterwarnings('always', category=MySQLdb.Warning)
@@ -472,7 +510,7 @@ class PersonCourse(base_service.BaseService):
             {"col_name": "nforum_posts", "col_type": "int"},
             {"col_name": "roles", "col_type": "varchar(255)"},
             {"col_name": "attempted_problems", "col_type": "int"},
-            #{"col_name": "inconsistent_flag", "col_type": "TINYINT(1)"}
+            # {"col_name": "inconsistent_flag", "col_type": "TINYINT(1)"}
         ]
         for course_id, course in self.courses.items():
             warnings.filterwarnings('ignore', category=MySQLdb.Warning)
@@ -481,29 +519,11 @@ class PersonCourse(base_service.BaseService):
             query += " ("
             for column in columns:
                 query += column["col_name"] + " " + column["col_type"] + ", "
-            query += " inconsistent_flag TINYINT(1)"
-            query += " );"
-            #print query
+            query += " inconsistent_flag TINYINT(1),"
+            query += " KEY idx_course_uid(`course_id`, `user_id`)) DEFAULT CHARSET=utf8;"
+            # print query
             cursor.execute(query)
             warnings.filterwarnings('always', category=MySQLdb.Warning)
-
-    def loadcourseinfo(self, json_file):
-        """
-        Loads the course information from JSON course structure file
-        :param json_file: the name of the course structure file
-        :return the course information
-        """
-        print self
-        courseurl = config.SERVER_URL + '/datasources/course_structure/' + json_file
-        print "ATTEMPTING TO LOAD "+courseurl
-        try:
-            courseinfofile = urllib2.urlopen(courseurl)
-            if courseinfofile:
-                courseinfo = json.load(courseinfofile)
-                return courseinfo
-        except urllib2.HTTPError as e:
-            print "Failed to load %s: %s " % (courseurl, e.message)
-        return None
 
     def get_chapter(self, obj, found=None):
         """
@@ -566,7 +586,7 @@ class PersonCourse(base_service.BaseService):
         Generates a CSV file for each course in the derived datasets
         :param tablename: The tablename to use
         """
-        print tablename
+        print "Exporting CSV: " + tablename
         if self.sql_pc_conn is None:
             self.sql_pc_conn = self.connect_to_sql(self.sql_pc_conn, "Person_Course", True)
         pc_cursor = self.sql_pc_conn.cursor()
