@@ -52,7 +52,6 @@ class DailyCount(base_service.BaseService):
         self.mongo_dbname = ""
         self.mongo_collection = None
         self.mongo_collectionname = ""
-        self.courses = {}
 
         self.initialize()
 
@@ -62,9 +61,7 @@ class DailyCount(base_service.BaseService):
         """
         Set initial variables before the run loop starts
         """
-        #self.courses = self.get_all_courses()
         print "STARTING DAILY COUNT"
-        self.courses = self.get_all_courses()
         self.connect_to_mongo("logs", "clickstream")
         #self.sql_pc_conn = self.connect_to_sql(self.sql_pc_conn, "Person_Course", True)
         #self.sql_course_conn = self.connect_to_sql(self.sql_course_conn, "", True)
@@ -79,7 +76,7 @@ class DailyCount(base_service.BaseService):
         last_iptocountry = self.find_last_run_ingest("IpToCountry")
         if self.finished_ingestion("TimeFinder") and last_run < last_timefinder and self.finished_ingestion("IpToCountry") and last_run < last_iptocountry:
 
-            for course_id, course in self.courses.items():
+            for course_id, course in self.get_all_courses().items():
 
 
                 print "RUNNNNING"

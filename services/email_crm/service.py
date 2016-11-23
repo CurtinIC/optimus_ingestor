@@ -54,7 +54,6 @@ class EmailCRM(base_service.BaseService):
         self.le_table = 'lastexport'
 
         self.basepath = os.path.dirname(__file__)
-        self.courses = {}
 
         self.initialize()
 
@@ -65,7 +64,6 @@ class EmailCRM(base_service.BaseService):
         Set initial variables before the run loop starts
         """
         self.sql_ecrm_conn = self.connect_to_sql(self.sql_ecrm_conn, self.ecrm_db, True)
-        self.courses = self.get_all_courses()
         self.create_ecrm_table()
 
         pass
@@ -343,7 +341,7 @@ class EmailCRM(base_service.BaseService):
         backup_prefix = e_tablename + "_" + current_time
         backup_file = os.path.join(backup_path, backup_prefix + ".csv")
 
-        for idx, course in enumerate(self.courses.items()):
+        for idx, course in enumerate(self.get_all_courses().items()):
             try:
                 course_id = course[0]
                 mongoname = course[1]['mongoname']

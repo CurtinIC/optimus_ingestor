@@ -51,7 +51,6 @@ class PersonCourse(base_service.BaseService):
         self.mongo_dbname = ""
         self.mongo_collection = None
         self.mongo_collectionname = ""
-        self.courses = {}
 
         self.initialize()
 
@@ -61,7 +60,6 @@ class PersonCourse(base_service.BaseService):
         """
         Set initial variables before the run loop starts
         """
-        self.courses = self.get_all_courses()
         self.sql_pc_conn = self.connect_to_sql(self.sql_pc_conn, "Person_Course", True)
         self.sql_course_conn = self.connect_to_sql(self.sql_course_conn, "", True)
         pass
@@ -106,12 +104,14 @@ class PersonCourse(base_service.BaseService):
                         last_run < last_iptocountry and \
                 self.finished_ingestion("DatabaseState") and \
                         last_run < last_dbstate:
+            course_items = self.get_all_courses().items()
+
             # Create 'cf_table'
             self.create_cf_table()
             # Clean 'pc_table'
-            self.clean_pc_db()
+            self.clean_pc_db(course_items)
 
-            for course_id, course in self.courses.items():
+            for course_id, course in course_items:
 
                 # Get chapters from course info
                 json_file = course['dbname'].replace("_", "-") + '.json'
@@ -172,7 +172,7 @@ class PersonCourse(base_service.BaseService):
                 cf_item.set_nactivities(content['nactivities'])
 
                 # Create 'pc_table'
-                self.create_pc_table()
+                self.create_pc_table(course_items)
 
                 # Dict of items of personcourse, key is the user id
                 pc_dict = {}
@@ -390,7 +390,7 @@ class PersonCourse(base_service.BaseService):
 
                 self.sql_pc_conn.commit()
 
-            self.datadump2csv()
+            self.datadump2csv(course_items)
             self.save_run_ingest()
             utils.log("Person course completed")
 
@@ -419,13 +419,13 @@ class PersonCourse(base_service.BaseService):
             utils.log("Could not connect to MongoDB: %s" % e)
         return False
 
-    def clean_pc_db(self):
+    def clean_pc_db(self, course_items):
         """
         Deletes the existing person course tables
         """
         pc_cursor = self.sql_pc_conn.cursor()
         warnings.filterwarnings('ignore', category=MySQLdb.Warning)
-        for course_id, course in self.courses.items():
+        for course_id, course in course_items:
             pc_tablename = self.pc_table + "_" + course_id
             query = "DROP TABLE IF EXISTS %s" % pc_tablename
             pc_cursor.execute(query)
@@ -482,7 +482,7 @@ class PersonCourse(base_service.BaseService):
         warnings.filterwarnings('always', category=MySQLdb.Warning)
 
     # The function to create the table "personcourse".
-    def create_pc_table(self):
+    def create_pc_table(self, course_items):
         """
         Creates the person course table
         """
@@ -512,7 +512,7 @@ class PersonCourse(base_service.BaseService):
             {"col_name": "attempted_problems", "col_type": "int"},
             # {"col_name": "inconsistent_flag", "col_type": "TINYINT(1)"}
         ]
-        for course_id, course in self.courses.items():
+        for course_id, course in course_items:
             warnings.filterwarnings('ignore', category=MySQLdb.Warning)
             pc_tablename = self.pc_table + "_" + course_id
             query = "CREATE TABLE IF NOT EXISTS " + pc_tablename
@@ -581,9 +581,10 @@ class PersonCourse(base_service.BaseService):
                 "nsummative_assessments": nsummative_assessments, "nformative_assessments": nformative_assessments,
                 "nincontent_discussions": nincontent_discussions, "nactivities": nactivities}
 
-    def datadump2csv(self, tablename="personcourse"):
+    def datadump2csv(self, course_items, tablename="personcourse"):
         """
         Generates a CSV file for each course in the derived datasets
+        :param course_items The list of courses to use
         :param tablename: The tablename to use
         """
         print "Exporting CSV: " + tablename
@@ -595,7 +596,7 @@ class PersonCourse(base_service.BaseService):
         current_time = time.strftime('%m%d%Y-%H%M%S')
 
         # export the {personcourse}x tables
-        for course_id, course in self.courses.items():
+        for course_id, course in course_items:
 
             try:
                 pc_tablename = self.pc_table + "_" + course_id
