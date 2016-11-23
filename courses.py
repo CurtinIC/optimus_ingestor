@@ -5,13 +5,22 @@ import re
 import config
 
 
+EDX_DEFAULT_COURSE = {
+    'id': 'default', 'dbname': 'api', 'mongoname': 'course-v1:CurtinX+TBOMx+2T2015', 'icon': 'fa-settings'
+}
+
+
 def get_all_courses():
     """
     Returns a dictionary that contains one distinct entry per course found in any of the configured data paths. Each entry
     is mapped to the dictionary representation of a CourseInfo object, and hence contains database information, ids, etc.
     :return: Dictionary of all courses, keyed on CourseInfo.id
     """
-    courses = {}
+    courses = {
+        'default': EDX_DEFAULT_COURSE,
+        'personcourse': {'id': 'personcourse', 'dbname': 'Person_Course', 'icon': 'fa-settings'},
+        'Course_Event': {'id': 'Course_Event', 'dbname': 'Course_Event', 'icon': 'fa-settings'},
+    }
 
     for data_path in config.DATA_PATHS:
         for course_info in _list_courses(os.path.join(data_path, 'database_state', 'latest')):

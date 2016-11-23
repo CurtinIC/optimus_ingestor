@@ -65,10 +65,10 @@ cp [BASE_PATH]/config.example.py [BASE_PATH]/config.py
 vim [BASE_PATH]/config.py
 [[EDIT THE VALUES]]
 ```
-Edit the courses which will be handled by some of the services (note, keep 'default' and 'person_course')
+Edit the default course (note this is not used directly by the ingestor)
 ```bash
 vim [BASE_PATH]/courses.py
-[[EDIT THE VALUES IN 'EDX_DATABASES']]
+[[EDIT 'EDX_DEFAULT_COURSE']]
 ```
 Some services make use of the EXPORT_PATH that is defined in config.py, which needs to be created before running the ingestor
 ```bash
