@@ -247,7 +247,7 @@ class BaseService(object):
         Returns all the courses
         :return: All the courses
         """
-        course_dict = config_courses.EDX_DATABASES
+        course_dict = config_courses.get_all_courses()
         if 'default' in course_dict:
             del (course_dict['default'])
         if 'personcourse' in course_dict:

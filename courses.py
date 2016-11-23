@@ -64,5 +64,3 @@ class _CourseInfo(object):
         self.discussiontable = org + '-' + course_run_hyphen + '-' + prod_edge
         self.icon = 'fa-heart'
         self.year = anytime_search.group(0) if year_search is None else year_search.group(0)
-
-EDX_DATABASES = get_all_courses()

@@ -44,8 +44,6 @@ class Eventcount(base_service.BaseService):
         self.mongo_db = None
         self.mongo_collection = None
 
-        self.courses = {}
-
         self.initialize()
 
         pass
@@ -55,7 +53,6 @@ class Eventcount(base_service.BaseService):
         Set initial variables before the run loop starts
         """
         ensure_mongo_indexes()
-        self.courses = self.get_all_courses()
         self.sql_ec_conn = self.connect_to_sql(self.sql_ec_conn, self.ec_db, True)
         self.connect_to_mongo(self.mongo_dbname, self.mongo_collectionname)
         # self.sql_course_conn = self.connect_to_sql(self.sql_course_conn, "", True)
@@ -69,14 +66,16 @@ class Eventcount(base_service.BaseService):
         """
         print "RUNNING THE EVENT COUNT"
         utils.log("The Event Count starts at: " + str(datetime.now()))
-        self.clean_ec_db()
+
+        course_items = self.get_all_courses().items()
+        self.clean_ec_db(course_items)
 
         last_run = self.find_last_run_ingest("EventCount")
         last_timefinder = self.find_last_run_ingest("TimeFinder")
 
         if self.finished_ingestion("TimeFinder") and last_run < last_timefinder:
             print "STARTING EVENT COUNT"
-            for course_id, course in self.courses.items():
+            for course_id, course in course_items:
                 print "EVENT COUNTING " + str(course_id)
                 print course_id
 
@@ -221,10 +220,10 @@ class Eventcount(base_service.BaseService):
             cursor.execute(query)
         pass
 
-    def clean_ec_db(self):
+    def clean_ec_db(self, course_items):
         cursor = self.sql_ec_conn.cursor()
 
-        for course_id, course in self.courses.items():
+        for course_id, course in course_items:
             ec_tablename = self.ec_table + "_" + course_id
             query = "DROP TABLE IF EXISTS %s" % ec_tablename
             cursor.execute(query)
