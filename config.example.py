@@ -21,3 +21,5 @@ SYMLINK_ENABLED = False
 SERVER_URL = 'http://dashboard.ceit.uq.edu.au'
 CLICKSTREAM_PREFIX = 'uqx-edx-events-'
 DBSTATE_PREFIX = 'UQx-'
+#Set EMAILCRM_FULL_EXPORT to True to force the emailcrm export to be a full export, irrespective of any previous exports
+EMAILCRM_FULL_EXPORT = True

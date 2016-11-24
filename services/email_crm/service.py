@@ -395,8 +395,10 @@ class EmailCRM(base_service.BaseService):
                         "JOIN {4}.emailcrm e ON au.email = e.email " \
                         "JOIN Person_Course.personcourse_{2} pc ON au.id = pc.user_id " \
                         "JOIN {0}.auth_userprofile up ON au.id = up.user_id " \
-                        "LEFT JOIN {4}.countries_io c ON up.country = c.country_code " \
-                        "LEFT JOIN {4}.lastexport le " \
+                        "LEFT JOIN {4}.countries_io c ON up.country = c.country_code "
+
+                if not config.EMAILCRM_FULL_EXPORT:
+                    query += "LEFT JOIN {4}.lastexport le " \
                         "ON le.user_id = up.user_id " \
                         "AND le.viewed = pc.viewed  " \
                         "AND le.explored = pc.explored " \
@@ -407,8 +409,9 @@ class EmailCRM(base_service.BaseService):
                         "AND le.viewed is null " \
                         "AND le.explored is null " \
                         "AND le.certified is null " \
-                        "AND le.course_id is null ".format(dbname, mongoname, course_id, nice_name, self.ecrm_db,
-                                                           start_date)
+                        "AND le.course_id is null "
+
+                query = query.format(dbname, mongoname, course_id, nice_name, self.ecrm_db, start_date)
 
                 ec_cursor = self.sql_ecrm_conn.cursor()
                 ec_cursor.execute(query)
