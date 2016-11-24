@@ -340,6 +340,7 @@ class EmailCRM(base_service.BaseService):
 
         backup_prefix = e_tablename + "_" + current_time
         backup_file = os.path.join(backup_path, backup_prefix + ".csv")
+        tmp_backup_file = backup_file + ".tmp"
 
         for idx, course in enumerate(self.get_all_courses().items()):
             try:
@@ -348,8 +349,7 @@ class EmailCRM(base_service.BaseService):
                 dbname = course[1]['dbname']
 
                 # Get nice course name from course info
-                json_file = dbname.replace("_", "-") + '.json'
-                courseinfo = course_info.load_course_info(json_file)
+                courseinfo = course_info.load_course_info(course[1]['coursestructure'])
                 if courseinfo is None:
                     utils.log("Can not find course info for ." + str(course_id))
                     continue
@@ -416,22 +416,23 @@ class EmailCRM(base_service.BaseService):
                 ec_cursor.close()
 
                 if idx == 0:
-                    with open(backup_file, "wb") as csv_file:
+                    with open(tmp_backup_file, "wb") as csv_file:
                         csv_writer = csv.writer(csv_file, dialect='excel', encoding='utf-8')
                         csv_writer.writerow([i[0] for i in ec_cursor.description])  # write headers
                         for row in result:
                             csv_writer.writerow(row)
                 else:
-                    with open(backup_file, "ab") as csv_file:
+                    with open(tmp_backup_file, "ab") as csv_file:
                         csv_writer = csv.writer(csv_file, dialect='excel', encoding='utf-8')
                         for row in result:
                             csv_writer.writerow(row)
-                utils.log("EmailCRM select written to file: %s" % course_id)
+                utils.log("EmailCRM select for %s appended to file: %s" % (course_id, tmp_backup_file))
             except Exception, e:
                 print repr(e)
                 utils.log("EmailCRM FAILED: %s" % (repr(e)))
-                break
+                return
 
+        os.rename(tmp_backup_file, backup_file)
         utils.log("The EmailCRM data: %s exported to csv file %s" % (e_tablename, backup_file))
 
 def get_files(path):

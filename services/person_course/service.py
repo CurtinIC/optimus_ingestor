@@ -114,8 +114,7 @@ class PersonCourse(base_service.BaseService):
             for course_id, course in course_items:
 
                 # Get chapters from course info
-                json_file = course['dbname'].replace("_", "-") + '.json'
-                courseinfo = course_info.load_course_info(json_file)
+                courseinfo = course_info.load_course_info(course['coursestructure'])
                 utils.log('PersonCourse: ' + str(course_id))
                 if courseinfo is None:
                     utils.log("Can not find course info for ." + str(course_id))
