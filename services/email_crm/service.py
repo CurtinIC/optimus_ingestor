@@ -100,11 +100,11 @@ class EmailCRM(base_service.BaseService):
                     # Ingest the email file
                     self.ingest_csv_file(path, self.ecrm_table)
 
-                    # Load last export file so we can use it for delta
-                    self.load_last_export()
-
                     # export the file
                     self.datadump2csv()
+
+                    # Load last export file so we can use it for delta
+                    self.load_last_export()
 
                     # update the ingest record
                     self.finish_ingest(ingest['id'])
@@ -396,7 +396,7 @@ class EmailCRM(base_service.BaseService):
                         "JOIN Person_Course.personcourse_{2} pc ON au.id = pc.user_id " \
                         "JOIN {0}.auth_userprofile up ON au.id = up.user_id " \
                         "LEFT JOIN {4}.countries_io c ON up.country = c.country_code " \
-                        "LEFT JOIN Email_CRM.lastexport le " \
+                        "LEFT JOIN {4}.lastexport le " \
                         "ON le.user_id = up.user_id " \
                         "AND le.viewed = pc.viewed  " \
                         "AND le.explored = pc.explored " \
@@ -426,6 +426,7 @@ class EmailCRM(base_service.BaseService):
                         csv_writer = csv.writer(csv_file, dialect='excel', encoding='utf-8')
                         for row in result:
                             csv_writer.writerow(row)
+
                 utils.log("EmailCRM select for %s appended to file: %s" % (course_id, tmp_backup_file))
             except Exception, e:
                 print repr(e)
