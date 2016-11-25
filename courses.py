@@ -67,9 +67,10 @@ class _CourseInfo(object):
         year_search = re.search('20\d{2}', run)
         anytime_search = re.search('anytime', run, re.IGNORECASE)
 
-        self.id = course_run_underscore
-        self.dbname = org + '_' + course_run_underscore
+        self.id = course_run_underscore + ('_Edge' if prod_edge == 'edge' else '')
+        self.dbname = org + '_' + self.id
         self.mongoname = 'course-v1:' + org + '+' + course_run_plus
         self.discussiontable = org + '-' + course_run_hyphen + '-' + prod_edge
+        self.coursestructure = full_name + '.json'
         self.icon = 'fa-heart'
         self.year = anytime_search.group(0) if year_search is None else year_search.group(0)

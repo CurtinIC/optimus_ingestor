@@ -80,8 +80,7 @@ class Eventcount(base_service.BaseService):
                 print course_id
 
                 # Get events from course info
-                json_file = course['dbname'].replace("_", "-") + ".json"
-                courseinfo = course_info.load_course_info(json_file)
+                courseinfo = course_info.load_course_info(course['coursestructure'])
                 if courseinfo is None:
                     utils.log("Can not find course info for ." + str(course_id))
                     continue

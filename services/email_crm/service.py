@@ -100,11 +100,11 @@ class EmailCRM(base_service.BaseService):
                     # Ingest the email file
                     self.ingest_csv_file(path, self.ecrm_table)
 
-                    # Load last export file so we can use it for delta
-                    self.load_last_export()
-
                     # export the file
                     self.datadump2csv()
+
+                    # Load last export file so we can use it for delta
+                    self.load_last_export()
 
                     # update the ingest record
                     self.finish_ingest(ingest['id'])
@@ -340,6 +340,7 @@ class EmailCRM(base_service.BaseService):
 
         backup_prefix = e_tablename + "_" + current_time
         backup_file = os.path.join(backup_path, backup_prefix + ".csv")
+        tmp_backup_file = backup_file + ".tmp"
 
         for idx, course in enumerate(self.get_all_courses().items()):
             try:
@@ -348,8 +349,7 @@ class EmailCRM(base_service.BaseService):
                 dbname = course[1]['dbname']
 
                 # Get nice course name from course info
-                json_file = dbname.replace("_", "-") + '.json'
-                courseinfo = course_info.load_course_info(json_file)
+                courseinfo = course_info.load_course_info(course[1]['coursestructure'])
                 if courseinfo is None:
                     utils.log("Can not find course info for ." + str(course_id))
                     continue
@@ -395,8 +395,10 @@ class EmailCRM(base_service.BaseService):
                         "JOIN {4}.emailcrm e ON au.email = e.email " \
                         "JOIN Person_Course.personcourse_{2} pc ON au.id = pc.user_id " \
                         "JOIN {0}.auth_userprofile up ON au.id = up.user_id " \
-                        "LEFT JOIN {4}.countries_io c ON up.country = c.country_code " \
-                        "LEFT JOIN Email_CRM.lastexport le " \
+                        "LEFT JOIN {4}.countries_io c ON up.country = c.country_code "
+
+                if not config.EMAILCRM_FULL_EXPORT:
+                    query += "LEFT JOIN {4}.lastexport le " \
                         "ON le.user_id = up.user_id " \
                         "AND le.viewed = pc.viewed  " \
                         "AND le.explored = pc.explored " \
@@ -407,8 +409,9 @@ class EmailCRM(base_service.BaseService):
                         "AND le.viewed is null " \
                         "AND le.explored is null " \
                         "AND le.certified is null " \
-                        "AND le.course_id is null ".format(dbname, mongoname, course_id, nice_name, self.ecrm_db,
-                                                           start_date)
+                        "AND le.course_id is null "
+
+                query = query.format(dbname, mongoname, course_id, nice_name, self.ecrm_db, start_date)
 
                 ec_cursor = self.sql_ecrm_conn.cursor()
                 ec_cursor.execute(query)
@@ -416,22 +419,24 @@ class EmailCRM(base_service.BaseService):
                 ec_cursor.close()
 
                 if idx == 0:
-                    with open(backup_file, "wb") as csv_file:
+                    with open(tmp_backup_file, "wb") as csv_file:
                         csv_writer = csv.writer(csv_file, dialect='excel', encoding='utf-8')
                         csv_writer.writerow([i[0] for i in ec_cursor.description])  # write headers
                         for row in result:
                             csv_writer.writerow(row)
                 else:
-                    with open(backup_file, "ab") as csv_file:
+                    with open(tmp_backup_file, "ab") as csv_file:
                         csv_writer = csv.writer(csv_file, dialect='excel', encoding='utf-8')
                         for row in result:
                             csv_writer.writerow(row)
-                utils.log("EmailCRM select written to file: %s" % course_id)
+
+                utils.log("EmailCRM select for %s appended to file: %s" % (course_id, tmp_backup_file))
             except Exception, e:
                 print repr(e)
                 utils.log("EmailCRM FAILED: %s" % (repr(e)))
-                break
+                return
 
+        os.rename(tmp_backup_file, backup_file)
         utils.log("The EmailCRM data: %s exported to csv file %s" % (e_tablename, backup_file))
 
 def get_files(path):
