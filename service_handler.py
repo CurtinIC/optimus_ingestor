@@ -109,7 +109,7 @@ class ServiceManager():
             cur.execute(query)
             self.sql_db.commit();
         warnings.filterwarnings('always', category=MySQLdb.Warning)
-    
+
 
     def add_to_ingestion(self, service_name, ingest_type, meta):
         """
@@ -118,6 +118,11 @@ class ServiceManager():
         :param ingest_type: the type of the ingestion
         :param service_name: the name of the service
         """
+
+        # it could be a long time between requests, so ensure sql_db connection is reconnected if necessary
+        self.sql_db.ping(True)
+
+        # now handle the request
         insert = True
         cur = self.sql_db.cursor()
         #Check if entry already exists

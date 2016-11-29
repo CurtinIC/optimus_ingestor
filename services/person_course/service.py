@@ -79,6 +79,10 @@ class PersonCourse(base_service.BaseService):
                         last_run < last_iptocountry and \
                 self.finished_ingestion("DatabaseState") and \
                         last_run < last_dbstate:
+            # it could be a long time between runs, so ensure database connections are kept alive if necessary
+            self.sql_pc_conn.ping(True)
+            self.sql_course_conn.ping(True)
+
             course_items = self.get_all_courses().items()
 
             # Create 'cf_table'
