@@ -23,8 +23,10 @@ def get_all_courses():
     }
 
     for data_path in config.DATA_PATHS:
-        for course_info in _list_courses(os.path.join(data_path, 'database_state', 'latest')):
-            courses[course_info.id] = course_info.__dict__
+        latest_path = os.path.join(data_path, 'database_state', 'latest')
+        if os.path.exists(latest_path):
+            for course_info in _list_courses(latest_path):
+                courses[course_info.id] = course_info.__dict__
 
     return courses
 
