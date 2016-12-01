@@ -436,8 +436,9 @@ class EmailCRM(base_service.BaseService):
                 utils.log("EmailCRM FAILED: %s" % (repr(e)))
                 return
 
-        os.rename(tmp_backup_file, backup_file)
-        utils.log("The EmailCRM data: %s exported to csv file %s" % (e_tablename, backup_file))
+        if os.path.exists(tmp_backup_file):
+            os.rename(tmp_backup_file, backup_file)
+            utils.log("The EmailCRM data: %s exported to csv file %s" % (e_tablename, backup_file))
 
 def get_files(path):
     """
