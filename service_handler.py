@@ -58,6 +58,15 @@ class ServiceManager():
                     servicethread.start()
                     self.servicethreads.append(servicethread)
 
+
+    def use_api_database(self):
+        """
+        Ensure the API SQL database connections are alive and well
+        """
+        if not sql_conn_is_alive(self.sql_db):
+            self.sql_db = connect_to_sql(sql_connect=self.sql_db, db_name='api', force_reconnect=True)
+
+
     def setup_ingest_database(self):
         """
         Ensures that the required DB and tables exist
@@ -65,13 +74,7 @@ class ServiceManager():
         warnings.filterwarnings('ignore', category=MySQLdb.Warning)
         #Create and connect to the API database
         log("Testing Database existance")
-        try:
-            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
-        except MySQLdb.OperationalError:
-            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='mysql', local_infile=1)
-            cur = self.sql_db.cursor()
-            cur.execute("CREATE DATABASE api")
-            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
+        self.use_api_database()
         if self.sql_db:
             log("Creating table ingestor if not exists")
             #Create the ingestor table if necessary
@@ -89,13 +92,7 @@ class ServiceManager():
         warnings.filterwarnings('ignore', category=MySQLdb.Warning)
         #Create and connect to the API database
         log("Testing Database existance")
-        try:
-            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
-        except MySQLdb.OperationalError:
-            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='mysql', local_infile=1)
-            cur = self.sql_db.cursor()
-            cur.execute("CREATE DATABASE API")
-            self.sql_db = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db='api', local_infile=1)
+        self.use_api_database()
         if self.sql_db:
             log("Creating table config")
             #Create the config table if necessary
@@ -120,7 +117,7 @@ class ServiceManager():
         """
 
         # it could be a long time between requests, so ensure sql_db connection is reconnected if necessary
-        self.sql_db.ping(True)
+        self.use_api_database()
 
         # now handle the request
         insert = True

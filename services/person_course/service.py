@@ -54,15 +54,21 @@ class PersonCourse(base_service.BaseService):
 
         self.initialize()
 
-    pass
-
     def setup(self):
         """
         Set initial variables before the run loop starts
         """
-        self.sql_pc_conn = self.connect_to_sql(self.sql_pc_conn, "Person_Course", True)
-        self.sql_course_conn = self.connect_to_sql(self.sql_course_conn, "", True)
-        pass
+        self.use_sql_databases()
+
+    def use_sql_databases(self):
+        """
+        Ensure the necessary SQL database connections are alive and well
+        """
+        if not utils.sql_conn_is_alive(self.sql_pc_conn):
+            self.sql_pc_conn = self.connect_to_sql(self.sql_pc_conn, "Person_Course", True)
+
+        if not utils.sql_conn_is_alive(self.sql_course_conn):
+            self.sql_course_conn = self.connect_to_sql(self.sql_course_conn, "", True)
 
     def run(self):
         """
@@ -79,9 +85,7 @@ class PersonCourse(base_service.BaseService):
                         last_run < last_iptocountry and \
                 self.finished_ingestion("DatabaseState") and \
                         last_run < last_dbstate:
-            # it could be a long time between runs, so ensure database connections are kept alive if necessary
-            self.sql_pc_conn.ping(True)
-            self.sql_course_conn.ping(True)
+            self.use_sql_databases()
 
             course_items = self.get_all_courses().items()
 
