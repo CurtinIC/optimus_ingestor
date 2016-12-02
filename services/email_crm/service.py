@@ -63,10 +63,15 @@ class EmailCRM(base_service.BaseService):
         """
         Set initial variables before the run loop starts
         """
-        self.sql_ecrm_conn = self.connect_to_sql(self.sql_ecrm_conn, self.ecrm_db, True)
+        self.use_ecrm_database()
         self.create_ecrm_table()
 
-        pass
+    def use_ecrm_database(self):
+        """
+        Ensure the necessary SQL database connections are alive and well
+        """
+        if not utils.sql_conn_is_alive(self.sql_ecrm_conn):
+            self.sql_ecrm_conn = self.connect_to_sql(self.sql_ecrm_conn, self.ecrm_db, True)
 
     def run(self):
         """
@@ -79,6 +84,7 @@ class EmailCRM(base_service.BaseService):
         if self.finished_ingestion("PersonCourse") and last_run < last_personcourse and \
                 self.finished_ingestion("DatabaseState") and \
                         last_run < last_dbstate:
+            self.use_ecrm_database()
 
             # Create country name table and import data (if required)
             self.create_load_cn_table()
