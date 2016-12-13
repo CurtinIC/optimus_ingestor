@@ -52,7 +52,6 @@ class DailyCount(base_service.BaseService):
         self.mongo_dbname = ""
         self.mongo_collection = None
         self.mongo_collectionname = ""
-        self.courses = {}
 
         self.initialize()
 
@@ -62,12 +61,8 @@ class DailyCount(base_service.BaseService):
         """
         Set initial variables before the run loop starts
         """
-        #self.courses = self.get_all_courses()
         print "STARTING DAILY COUNT"
-        self.courses = self.get_all_courses()
         self.connect_to_mongo("logs", "clickstream")
-        #self.sql_pc_conn = self.connect_to_sql(self.sql_pc_conn, "Person_Course", True)
-        #self.sql_course_conn = self.connect_to_sql(self.sql_course_conn, "", True)
         pass
 
     def run(self):
@@ -79,17 +74,17 @@ class DailyCount(base_service.BaseService):
         last_iptocountry = self.find_last_run_ingest("IpToCountry")
         if self.finished_ingestion("TimeFinder") and last_run < last_timefinder and self.finished_ingestion("IpToCountry") and last_run < last_iptocountry:
 
-            for course_id, course in self.courses.items():
+            for course_id, course in self.get_all_courses().items():
 
 
                 print "RUNNNNING"
                 print course
 
-                user_events = self.mongo_collection.aggregate([
+                user_events = list(self.mongo_collection.aggregate([
                     {"$match": {"context.course_id": course['mongoname']}},
-                    {"$sort": {"time": 1}},
+                    # {"$sort": {"time": 1}},
                     {"$group": {"_id": "$context.user_id", "countrySet": {"$addToSet": "$country"}, "eventSum": {"$sum": 1}, "last_event": {"$last": "$time"}}}
-                ], allowDiskUse=True)['result']
+                ], allowDiskUse=True))  # ['result']
                 print "WEEE"
                 print user_events
                 print "XXXX"
@@ -192,37 +187,6 @@ class DailyCount(base_service.BaseService):
         except Exception, e:
             utils.log("Could not connect to MongoDB: %s" % e)
         return False
-
-    def connect_to_sql(self, sql_connect, db_name="", force_reconnect=False, create_db=True):
-        """
-        Connect to SQL database or create the database and connect
-        :param sql_connect: the variable to set
-        :param db_name: the name of the database
-        :param force_reconnect: force the database connection
-        :param create_db: create the database
-        :return the created SQL connection
-        """
-        print self
-        if sql_connect is None or force_reconnect:
-            try:
-                sql_connect = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD, db=db_name)
-                return sql_connect
-            except Exception, e:
-                # Create the database
-                if e[0] and create_db and db_name != "":
-                    if sql_connect is None:
-                        sql_connect = MySQLdb.connect(host=config.SQL_HOST, user=config.SQL_USERNAME, passwd=config.SQL_PASSWORD)
-                    utils.log("Creating database " + db_name)
-
-                    cur = sql_connect.cursor()
-                    cur.execute("CREATE DATABASE " + db_name)
-                    sql_connect.commit()
-                    sql_connect.select_db(db_name)
-                    return sql_connect
-                else:
-                    utils.log("Could not connect to MySQL: %s" % e)
-                    return None
-        return None
 
 
 def safe_name(filename):

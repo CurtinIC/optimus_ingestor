@@ -109,8 +109,10 @@ process md5Check {
 
 /*
  * extractEventLog will decrypt, extract, and publish any raw EdX or Edge event log that appears on the queuedEventLog
- * channel. It ignores errors, as failure is possible (e.g., file is mid-download). When appropriate, the "latest"
- * symbolic link is also updated.
+ * channel. It ignores errors, as failure is possible (e.g., file is mid-download), so the first command with a
+ * non-zero return code won't stop the entire extraction pipeline (it will only stop the process script). On new
+ * data being available (irrespective of the date), the ingestor web server is notified. When appropriate, the "latest"
+ * symbolic link is updated.
  */
 process extractEventLog {
     errorStrategy 'ignore'
@@ -128,14 +130,19 @@ process extractEventLog {
 
     published=\$(find '${outputFolder}' -mindepth 1 -maxdepth 1 -type f -name '${outputName}')
     latest=\$(find '${outputFolder}' -mindepth 1 -maxdepth 1 -type f -regextype sed -regex '.*/${params.institution}-\\(\\(edx\\)\\|\\(edge\\)\\)-events-[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\.log' | sort | tail -1)
-    if [ "\$published" == "\$latest" ]; then ln -sfn "\$published" '${outputFolder}/latest'; fi
+    if [ "\$published" == "\$latest" ]; then
+        ln -sfn "\$published" '${outputFolder}/latest'
+    fi
+
+    curl '${params.ingestorServer}/newdata'
     """
 }
 
 /*
  * extractCourseData will unzip, recursively decrypt, recursively un-tar, and publish any raw course data file that
  * appears on the queuedCourseData channel. It ignores errors, as failure is possible (e.g., file is mid-download).
- * When appropriate, the "latest" symbolic link is also updated.
+ * When appropriate, the "latest" symbolic link is updated, in which case the ingestor web server is also notified of
+ * there being new data.
  */
 process extractCourseData {
     errorStrategy 'ignore'
@@ -156,6 +163,9 @@ process extractCourseData {
 
     published=\$(find '${outputFolder}' -mindepth 1 -maxdepth 1 -type d -name '${outputName}')
     latest=\$(find '${outputFolder}' -mindepth 1 -maxdepth 1 -type d -regextype sed -regex '.*/${params.institution}-[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}' | sort | tail -1)
-    if [ "\$published" == "\$latest" ]; then ln -sfn "\$published" '${outputFolder}/latest'; fi
+    if [ "\$published" == "\$latest" ]; then
+        ln -sfn "\$published" '${outputFolder}/latest'
+        curl '${params.ingestorServer}/newdata'
+    fi
     """
 }
