@@ -1,7 +1,9 @@
 """
 The base service which all services extend
 """
-from utils import *
+import utils
+import config
+import datetime
 import time
 import MySQLdb
 import courses as config_courses
@@ -64,7 +66,7 @@ class BaseService(object):
         """
         if self.enabled:
             self.servicename = str(self.__class__.__name__).lower().strip()
-            log("Starting service " + self.servicename)
+            utils.log("Starting service " + self.servicename)
             self.status = 'loading'
             self.setup_ingest_api()
             self.setup()
@@ -81,7 +83,7 @@ class BaseService(object):
         """
         Setup function, this should be overridden by the service
         """
-        log("BAD METHOD, SETUP SHOULD BE SUBCLASSED IN " + self.servicename)
+        utils.log("BAD METHOD, SETUP SHOULD BE SUBCLASSED IN " + self.servicename)
 
     def run(self):
         """
@@ -207,7 +209,7 @@ class BaseService(object):
                                               charset='utf8')
                 return True
             except MySQLdb.OperationalError:
-                log("Could not connect to MySQL Database: %s" % database_name)
+                utils.log("Could not connect to MySQL Database: %s" % database_name)
                 return False
 
     def sql_query(self, query, commit=False):
@@ -282,25 +284,4 @@ class BaseService(object):
         :return the created SQL connection
         """
         print self
-        if sql_connect is None or force_reconnect:
-            try:
-                sql_connect = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME,
-                                              passwd=config.SQL_PASSWORD, db=db_name, local_infile=1, charset='utf8')
-                return sql_connect
-            except Exception, e:
-                # Create the database
-                if e[0] and create_db and db_name != "":
-                    if sql_connect is None:
-                        sql_connect = MySQLdb.connect(host=config.SQL_HOST, port=config.SQL_PORT, user=config.SQL_USERNAME,
-                                                      passwd=config.SQL_PASSWORD, local_infile=1, charset='utf8')
-                    log("Creating database " + db_name)
-
-                    cur = sql_connect.cursor()
-                    cur.execute("CREATE DATABASE " + db_name)
-                    sql_connect.commit()
-                    sql_connect.select_db(db_name)
-                    return sql_connect
-                else:
-                    log("Could not connect to MySQL: %s" % e)
-                    return None
-        return None
+        return utils.connect_to_sql(sql_connect=sql_connect, db_name=db_name, force_reconnect=force_reconnect, create_db=create_db, charset='utf8')
